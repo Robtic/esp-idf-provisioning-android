@@ -20,7 +20,7 @@
     <string name="btn_back">Back</string>
     <string name="btn_provision">Provision</string>
     <string name="btn_scan_qr_code">Scan QR Code</string>
-    <string name="btn_provision_device">Provision New Device</string>
+    <string name="btn_provision_device">Add New Device</string>
     <string name="btn_connect">Connect</string>
     <string name="btn_connecting">Connecting&#8230;</string>
     <string name="btn_wifi_settings">Go to Wi-Fi Settings</string>
@@ -103,7 +103,7 @@
     <string name="devices_title">Devices</string>
     <string name="enter_device_key">Enter Your Proof Of Possession PIN</string>
     <string name="app_version">App Version</string>
-    <string name="powered_by_esp">Powered by ESPRESSIF</string>
+    <string name="powered_by_esp">Powered by HSH</string>
 
     <string name="join_other_network">Join Other Network</string>
     <string name="networks">Networks</string>

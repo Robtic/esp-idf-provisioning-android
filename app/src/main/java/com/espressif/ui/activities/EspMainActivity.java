@@ -24,6 +24,8 @@ import android.content.SharedPreferences;
 import android.content.pm.PackageInfo;
 import android.content.pm.PackageManager;
 import android.location.LocationManager;
+import android.net.nsd.NsdManager;
+import android.net.nsd.NsdServiceInfo;
 import android.os.Build;
 import android.os.Bundle;
 import android.provider.Settings;
@@ -46,6 +48,8 @@ import com.espressif.provisioning.ESPProvisionManager;
 import com.espressif.wifi_provisioning.BuildConfig;
 import com.espressif.wifi_provisioning.R;
 
+import java.net.InetAddress;
+
 public class EspMainActivity extends AppCompatActivity {
 
     private static final String TAG = EspMainActivity.class.getSimpleName();
@@ -60,6 +64,55 @@ public class EspMainActivity extends AppCompatActivity {
     private SharedPreferences sharedPreferences;
     private String deviceType;
 
+    private final String SERVICE_TYPE = "_http._tcp";
+
+    final NsdManager.ResolveListener resolveListener = new NsdManager.ResolveListener() {
+
+        @Override
+        public void onResolveFailed(NsdServiceInfo serviceInfo, int errorCode) {
+            // Called when the resolve fails. Use the error code to debug.
+            Log.e(TAG, "Resolve failed: " + errorCode);
+        }
+
+        @Override
+        public void onServiceResolved(NsdServiceInfo serviceInfo) {
+            Log.e(TAG, "Resolve Succeeded. " + serviceInfo);
+            Log.e(TAG, "IP " + serviceInfo.getHost().getHostAddress()+" Port "+serviceInfo.getPort());
+        }
+    };
+
+    final NsdManager.DiscoveryListener discoveryListener = new NsdManager.DiscoveryListener() {
+        @Override
+        public void onDiscoveryStarted(String s) {
+            Log.i(TAG, "onDiscoveryStarted: " + s);
+        }
+
+        @Override
+        public void onServiceFound(NsdServiceInfo nsdServiceInfo) {
+            Log.i(TAG, "onServiceFound: " + nsdServiceInfo.toString());
+        }
+
+        @Override
+        public void onServiceLost(NsdServiceInfo nsdServiceInfo) {
+            Log.i(TAG, "onServiceLost: " + nsdServiceInfo.toString());
+        }
+
+        @Override
+        public void onDiscoveryStopped(String s) {
+            Log.i(TAG, "onDiscoveryStopped: " + s);
+        }
+
+        @Override
+        public void onStartDiscoveryFailed(String s, int i) {
+            Log.i(TAG, "onStartDiscoveryFailed: " + s);
+        }
+
+        @Override
+        public void onStopDiscoveryFailed(String s, int i) {
+            Log.i(TAG, "onStopDiscoveryFailed: " + s);
+        }
+    };
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
 
@@ -71,6 +124,12 @@ public class EspMainActivity extends AppCompatActivity {
 
         sharedPreferences = getSharedPreferences(AppConstants.ESP_PREFERENCES, Context.MODE_PRIVATE);
         provisionManager = ESPProvisionManager.getInstance(getApplicationContext());
+
+//        initializeDiscoveryListener();
+        final NsdManager nsdManager = (NsdManager) getSystemService(Context.NSD_SERVICE);
+        nsdManager.discoverServices(
+                SERVICE_TYPE, NsdManager.PROTOCOL_DNS_SD, discoveryListener);
+        nsdManager.resolveService();
     }
 
     @Override
@@ -122,6 +181,61 @@ public class EspMainActivity extends AppCompatActivity {
 
         return super.onOptionsItemSelected(item);
     }
+
+//    public void initializeDiscoveryListener() {
+//
+//        // Instantiate a new DiscoveryListener
+//        discoveryListener = new NsdManager.DiscoveryListener() {
+//
+//
+//            // Called as soon as service discovery begins.
+//            @Override
+//            public void onDiscoveryStarted(String regType) {
+//                Log.d(TAG, "Service discovery started");
+//            }
+//
+//            @Override
+//            public void onServiceFound(NsdServiceInfo service) {
+//                // A service was found! Do something with it.
+//                Log.d(TAG, "Service discovery success" + service);
+//                if (!service.getServiceType().equals(SERVICE_TYPE)) {
+//                    // Service type is the string containing the protocol and
+//                    // transport layer for this service.
+//                    Log.d(TAG, "Unknown Service Type: " + service.getServiceType());
+//                }
+//                else
+//                {
+//                    // The name of the service tells the user what they'd be
+//                    // connecting to. It could be "Bob's Chat App".
+//                    Log.d(TAG, "Same machine: " + service.getServiceName());
+//                }
+//            }
+//
+//            @Override
+//            public void onServiceLost(NsdServiceInfo service) {
+//                // When the network service is no longer available.
+//                // Internal bookkeeping code goes here.
+//                Log.e(TAG, "service lost: " + service);
+//            }
+//
+//            @Override
+//            public void onDiscoveryStopped(String serviceType) {
+//                Log.i(TAG, "Discovery stopped: " + serviceType);
+//            }
+//
+//            @Override
+//            public void onStartDiscoveryFailed(String serviceType, int errorCode) {
+//                Log.e(TAG, "Discovery failed: Error code:" + errorCode);
+//                nsdManager.stopServiceDiscovery(this);
+//            }
+//
+//            @Override
+//            public void onStopDiscoveryFailed(String serviceType, int errorCode) {
+//                Log.e(TAG, "Discovery failed: Error code:" + errorCode);
+//                nsdManager.stopServiceDiscovery(this);
+//            }
+//        };
+//    }
 
     @Override
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
