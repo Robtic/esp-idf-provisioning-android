@@ -37,6 +37,7 @@ import android.widget.ImageView;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import androidx.annotation.NonNull;
 import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.widget.Toolbar;
@@ -49,6 +50,8 @@ import com.espressif.wifi_provisioning.BuildConfig;
 import com.espressif.wifi_provisioning.R;
 
 import java.net.InetAddress;
+import java.util.concurrent.Executor;
+import java.util.concurrent.Executors;
 
 public class EspMainActivity extends AppCompatActivity {
 
@@ -64,22 +67,48 @@ public class EspMainActivity extends AppCompatActivity {
     private SharedPreferences sharedPreferences;
     private String deviceType;
 
+    private NsdManager nsdManager;
     private final String SERVICE_TYPE = "_http._tcp";
 
-    final NsdManager.ResolveListener resolveListener = new NsdManager.ResolveListener() {
+    private Executor background_ex = Executors.newSingleThreadExecutor();
 
+    private final NsdManager.ResolveListener resolveListener = new NsdManager.ResolveListener() {
         @Override
-        public void onResolveFailed(NsdServiceInfo serviceInfo, int errorCode) {
-            // Called when the resolve fails. Use the error code to debug.
-            Log.e(TAG, "Resolve failed: " + errorCode);
+        public void onResolveFailed(NsdServiceInfo nsdServiceInfo, int i) {
+            Log.e(TAG, "Resolve Failed. " + nsdServiceInfo);
+            Log.e(TAG, "Resolve Failed " + i);
         }
 
         @Override
-        public void onServiceResolved(NsdServiceInfo serviceInfo) {
-            Log.e(TAG, "Resolve Succeeded. " + serviceInfo);
-            Log.e(TAG, "IP " + serviceInfo.getHost().getHostAddress()+" Port "+serviceInfo.getPort());
+        public void onServiceResolved(NsdServiceInfo nsdServiceInfo) {
+            Log.e(TAG, "Resolve Succeeded. " + nsdServiceInfo);
+            Log.e(TAG, "IP " + nsdServiceInfo.getHost().getHostAddress()+" Port "+nsdServiceInfo.getPort());
         }
     };
+
+//    final NsdManager.ServiceInfoCallback serviceInfoCallback = new NsdManager.ServiceInfoCallback() {
+//        @Override
+//        public void onServiceInfoCallbackRegistrationFailed(int errorCode) {
+//            Log.e(TAG, "Resolve Failed " + errorCode);
+//        }
+//
+//        @Override
+//        public void onServiceUpdated(@NonNull NsdServiceInfo serviceInfo) {
+//            Log.e(TAG, "Resolve Succeeded. " + serviceInfo);
+//            Log.e(TAG, "IP " + serviceInfo.getHost().getHostAddress()+" Port "+serviceInfo.getPort());
+//        }
+//
+//        @Override
+//        public void onServiceLost() {
+//            Log.e(TAG, "onServiceLost ");
+//        }
+//
+//        @Override
+//        public void onServiceInfoCallbackUnregistered() {
+//            Log.e(TAG, "onServiceInfoCallbackUnregistered ");
+//
+//        }
+//    };
 
     final NsdManager.DiscoveryListener discoveryListener = new NsdManager.DiscoveryListener() {
         @Override
@@ -90,6 +119,10 @@ public class EspMainActivity extends AppCompatActivity {
         @Override
         public void onServiceFound(NsdServiceInfo nsdServiceInfo) {
             Log.i(TAG, "onServiceFound: " + nsdServiceInfo.toString());
+            if(nsdServiceInfo.getServiceName().startsWith("PROV"))
+            {
+                nsdManager.resolveService(nsdServiceInfo,resolveListener);
+            }
         }
 
         @Override
@@ -126,10 +159,10 @@ public class EspMainActivity extends AppCompatActivity {
         provisionManager = ESPProvisionManager.getInstance(getApplicationContext());
 
 //        initializeDiscoveryListener();
-        final NsdManager nsdManager = (NsdManager) getSystemService(Context.NSD_SERVICE);
+
+        nsdManager = (NsdManager) getSystemService(Context.NSD_SERVICE);
         nsdManager.discoverServices(
                 SERVICE_TYPE, NsdManager.PROTOCOL_DNS_SD, discoveryListener);
-        nsdManager.resolveService();
     }
 
     @Override
@@ -181,61 +214,6 @@ public class EspMainActivity extends AppCompatActivity {
 
         return super.onOptionsItemSelected(item);
     }
-
-//    public void initializeDiscoveryListener() {
-//
-//        // Instantiate a new DiscoveryListener
-//        discoveryListener = new NsdManager.DiscoveryListener() {
-//
-//
-//            // Called as soon as service discovery begins.
-//            @Override
-//            public void onDiscoveryStarted(String regType) {
-//                Log.d(TAG, "Service discovery started");
-//            }
-//
-//            @Override
-//            public void onServiceFound(NsdServiceInfo service) {
-//                // A service was found! Do something with it.
-//                Log.d(TAG, "Service discovery success" + service);
-//                if (!service.getServiceType().equals(SERVICE_TYPE)) {
-//                    // Service type is the string containing the protocol and
-//                    // transport layer for this service.
-//                    Log.d(TAG, "Unknown Service Type: " + service.getServiceType());
-//                }
-//                else
-//                {
-//                    // The name of the service tells the user what they'd be
-//                    // connecting to. It could be "Bob's Chat App".
-//                    Log.d(TAG, "Same machine: " + service.getServiceName());
-//                }
-//            }
-//
-//            @Override
-//            public void onServiceLost(NsdServiceInfo service) {
-//                // When the network service is no longer available.
-//                // Internal bookkeeping code goes here.
-//                Log.e(TAG, "service lost: " + service);
-//            }
-//
-//            @Override
-//            public void onDiscoveryStopped(String serviceType) {
-//                Log.i(TAG, "Discovery stopped: " + serviceType);
-//            }
-//
-//            @Override
-//            public void onStartDiscoveryFailed(String serviceType, int errorCode) {
-//                Log.e(TAG, "Discovery failed: Error code:" + errorCode);
-//                nsdManager.stopServiceDiscovery(this);
-//            }
-//
-//            @Override
-//            public void onStopDiscoveryFailed(String serviceType, int errorCode) {
-//                Log.e(TAG, "Discovery failed: Error code:" + errorCode);
-//                nsdManager.stopServiceDiscovery(this);
-//            }
-//        };
-//    }
 
     @Override
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
