@@ -10,26 +10,51 @@
     <RelativeLayout
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:layout_above="@id/btn_provision_device">
+        android:layout_above="@id/btn_provision_device"
+        android:layout_marginBottom="7dp">
 
         <ImageView
             android:id="@+id/iv_esp"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_centerInParent="true"
-            android:src="@drawable/ic_esp" />
+            android:src="@drawable/ic_esp"
+            android:visibility="gone" />
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:layout_marginHorizontal="@dimen/margin_8"
+            android:orientation="vertical">
+
+            <androidx.recyclerview.widget.RecyclerView
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:layout_marginTop="@dimen/margin_8" />
+        </LinearLayout>
 
     </RelativeLayout>
 
-    <include
+    <com.google.android.material.floatingactionbutton.FloatingActionButton
         android:id="@+id/btn_provision_device"
-        layout="@layout/button"
-        android:layout_width="match_parent"
+        android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_above="@id/ll_version"
-        android:layout_marginStart="@dimen/margin_32"
-        android:layout_marginTop="@dimen/margin_8"
-        android:layout_marginEnd="@dimen/margin_32" />
+        android:layout_alignParentRight="true"
+        android:layout_alignParentBottom="true"
+        android:layout_marginRight="@dimen/margin_16"
+        android:layout_marginBottom="@dimen/margin_16"
+        android:clickable="true"
+        android:src="@android:drawable/ic_input_add" />
+
+    <com.google.android.material.floatingactionbutton.FloatingActionButton
+        android:id="@+id/btn_refresh_devices"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_alignParentBottom="true"
+        android:layout_marginLeft="@dimen/margin_16"
+        android:layout_marginBottom="@dimen/margin_16"
+        android:clickable="true"
+        android:src="@drawable/ic_refresh" />
 
     <LinearLayout
         android:id="@+id/ll_version"

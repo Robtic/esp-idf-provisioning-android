@@ -48,6 +48,7 @@ import com.espressif.provisioning.ESPConstants;
 import com.espressif.provisioning.ESPProvisionManager;
 import com.espressif.wifi_provisioning.BuildConfig;
 import com.espressif.wifi_provisioning.R;
+import com.google.android.material.floatingactionbutton.FloatingActionButton;
 
 import java.net.InetAddress;
 import java.util.concurrent.Executor;
@@ -62,12 +63,15 @@ public class EspMainActivity extends AppCompatActivity {
     private static final int REQUEST_ENABLE_BT = 2;
 
     private ESPProvisionManager provisionManager;
-    private CardView btnAddDevice;
+    private FloatingActionButton btnAddDevice;
+
+    private FloatingActionButton btnRefreshDevices;
     private ImageView ivEsp;
     private SharedPreferences sharedPreferences;
     private String deviceType;
 
     private NsdManager nsdManager;
+    private NsdManager.DiscoveryListener discoveryListener;
     private final String SERVICE_TYPE = "_http._tcp";
 
     private Executor background_ex = Executors.newSingleThreadExecutor();
@@ -86,65 +90,43 @@ public class EspMainActivity extends AppCompatActivity {
         }
     };
 
-//    final NsdManager.ServiceInfoCallback serviceInfoCallback = new NsdManager.ServiceInfoCallback() {
-//        @Override
-//        public void onServiceInfoCallbackRegistrationFailed(int errorCode) {
-//            Log.e(TAG, "Resolve Failed " + errorCode);
-//        }
-//
-//        @Override
-//        public void onServiceUpdated(@NonNull NsdServiceInfo serviceInfo) {
-//            Log.e(TAG, "Resolve Succeeded. " + serviceInfo);
-//            Log.e(TAG, "IP " + serviceInfo.getHost().getHostAddress()+" Port "+serviceInfo.getPort());
-//        }
-//
-//        @Override
-//        public void onServiceLost() {
-//            Log.e(TAG, "onServiceLost ");
-//        }
-//
-//        @Override
-//        public void onServiceInfoCallbackUnregistered() {
-//            Log.e(TAG, "onServiceInfoCallbackUnregistered ");
-//
-//        }
-//    };
-
-    final NsdManager.DiscoveryListener discoveryListener = new NsdManager.DiscoveryListener() {
-        @Override
-        public void onDiscoveryStarted(String s) {
-            Log.i(TAG, "onDiscoveryStarted: " + s);
-        }
-
-        @Override
-        public void onServiceFound(NsdServiceInfo nsdServiceInfo) {
-            Log.i(TAG, "onServiceFound: " + nsdServiceInfo.toString());
-            if(nsdServiceInfo.getServiceName().startsWith("PROV"))
-            {
-                nsdManager.resolveService(nsdServiceInfo,resolveListener);
+    public void initializeDiscoveryListener() {
+        discoveryListener = new NsdManager.DiscoveryListener() {
+            @Override
+            public void onDiscoveryStarted(String s) {
+                Log.i(TAG, "onDiscoveryStarted: " + s);
             }
-        }
 
-        @Override
-        public void onServiceLost(NsdServiceInfo nsdServiceInfo) {
-            Log.i(TAG, "onServiceLost: " + nsdServiceInfo.toString());
-        }
+            @Override
+            public void onServiceFound(NsdServiceInfo nsdServiceInfo) {
+                Log.i(TAG, "onServiceFound: " + nsdServiceInfo.toString());
+                if(nsdServiceInfo.getServiceName().startsWith("PROV"))
+                {
+                    nsdManager.resolveService(nsdServiceInfo,resolveListener);
+                }
+            }
 
-        @Override
-        public void onDiscoveryStopped(String s) {
-            Log.i(TAG, "onDiscoveryStopped: " + s);
-        }
+            @Override
+            public void onServiceLost(NsdServiceInfo nsdServiceInfo) {
+                Log.i(TAG, "onServiceLost: " + nsdServiceInfo.toString());
+            }
 
-        @Override
-        public void onStartDiscoveryFailed(String s, int i) {
-            Log.i(TAG, "onStartDiscoveryFailed: " + s);
-        }
+            @Override
+            public void onDiscoveryStopped(String s) {
+                Log.i(TAG, "onDiscoveryStopped: " + s);
+            }
 
-        @Override
-        public void onStopDiscoveryFailed(String s, int i) {
-            Log.i(TAG, "onStopDiscoveryFailed: " + s);
-        }
-    };
+            @Override
+            public void onStartDiscoveryFailed(String s, int i) {
+                Log.i(TAG, "onStartDiscoveryFailed: " + s);
+            }
+
+            @Override
+            public void onStopDiscoveryFailed(String s, int i) {
+                Log.i(TAG, "onStopDiscoveryFailed: " + s);
+            }
+        };
+    }
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -158,11 +140,9 @@ public class EspMainActivity extends AppCompatActivity {
         sharedPreferences = getSharedPreferences(AppConstants.ESP_PREFERENCES, Context.MODE_PRIVATE);
         provisionManager = ESPProvisionManager.getInstance(getApplicationContext());
 
-//        initializeDiscoveryListener();
-
         nsdManager = (NsdManager) getSystemService(Context.NSD_SERVICE);
-        nsdManager.discoverServices(
-                SERVICE_TYPE, NsdManager.PROTOCOL_DNS_SD, discoveryListener);
+        discoverServices();
+
     }
 
     @Override
@@ -238,8 +218,11 @@ public class EspMainActivity extends AppCompatActivity {
 
         ivEsp = findViewById(R.id.iv_esp);
         btnAddDevice = findViewById(R.id.btn_provision_device);
-        btnAddDevice.findViewById(R.id.iv_arrow).setVisibility(View.GONE);
+//        btnAddDevice.findViewById(R.id.iv_arrow).setVisibility(View.GONE);
         btnAddDevice.setOnClickListener(addDeviceBtnClickListener);
+
+        btnRefreshDevices = findViewById(R.id.btn_refresh_devices);
+        btnRefreshDevices.setOnClickListener(refreshDevicesBtnClickListener);
 
         TextView tvAppVersion = findViewById(R.id.tv_app_version);
 
@@ -269,6 +252,31 @@ public class EspMainActivity extends AppCompatActivity {
             addDeviceClick();
         }
     };
+
+    View.OnClickListener refreshDevicesBtnClickListener = new View.OnClickListener() {
+
+        @Override
+        public void onClick(View v) {
+            discoverServices();
+        }
+    };
+
+    public void discoverServices() {
+        stopDiscovery();  // Cancel any existing discovery request
+        initializeDiscoveryListener();
+        nsdManager.discoverServices(
+                SERVICE_TYPE, NsdManager.PROTOCOL_DNS_SD, discoveryListener);
+    }
+
+    public void stopDiscovery() {
+        if (discoveryListener != null) {
+            try {
+                nsdManager.stopServiceDiscovery(discoveryListener);
+            } finally {
+            }
+            discoveryListener = null;
+        }
+    }
 
     private void addDeviceClick() {
 
