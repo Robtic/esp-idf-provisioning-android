@@ -34,6 +34,7 @@ import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
 import android.widget.ImageView;
+import android.widget.ListView;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -42,15 +43,21 @@ import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.widget.Toolbar;
 import androidx.cardview.widget.CardView;
+import androidx.recyclerview.widget.RecyclerView;
 
 import com.espressif.AppConstants;
 import com.espressif.provisioning.ESPConstants;
 import com.espressif.provisioning.ESPProvisionManager;
+import com.espressif.ui.adapters.DeviceCardAdapter;
+import com.espressif.ui.adapters.WiFiListAdapter;
+import com.espressif.ui.models.BlindDevice;
 import com.espressif.wifi_provisioning.BuildConfig;
 import com.espressif.wifi_provisioning.R;
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
 
 import java.net.InetAddress;
+import java.util.ArrayList;
+import java.util.Map;
 import java.util.concurrent.Executor;
 import java.util.concurrent.Executors;
 
@@ -74,6 +81,10 @@ public class EspMainActivity extends AppCompatActivity {
     private NsdManager.DiscoveryListener discoveryListener;
     private final String SERVICE_TYPE = "_http._tcp";
 
+    private ListView foundDeviceListView;
+    private DeviceCardAdapter foundDevicesAdapter;
+
+    private ArrayList<BlindDevice> foundDevicesList;
     private Executor background_ex = Executors.newSingleThreadExecutor();
 
     private final NsdManager.ResolveListener resolveListener = new NsdManager.ResolveListener() {
@@ -85,6 +96,18 @@ public class EspMainActivity extends AppCompatActivity {
 
         @Override
         public void onServiceResolved(NsdServiceInfo nsdServiceInfo) {
+
+            runOnUiThread(new Runnable() {
+                @Override
+                public void run() {
+                    Map<String, byte[]> attrs;
+                    attrs = nsdServiceInfo.getAttributes();
+                    foundDevicesList.add(new BlindDevice(nsdServiceInfo.getHost(),nsdServiceInfo.getPort()));
+                    foundDevicesAdapter.notifyDataSetChanged();
+                    Log.e(TAG, "Device count: "+foundDevicesList.size());
+                }
+            });
+
             Log.e(TAG, "Resolve Succeeded. " + nsdServiceInfo);
             Log.e(TAG, "IP " + nsdServiceInfo.getHost().getHostAddress()+" Port "+nsdServiceInfo.getPort());
         }
@@ -142,7 +165,6 @@ public class EspMainActivity extends AppCompatActivity {
 
         nsdManager = (NsdManager) getSystemService(Context.NSD_SERVICE);
         discoverServices();
-
     }
 
     @Override
@@ -224,6 +246,20 @@ public class EspMainActivity extends AppCompatActivity {
         btnRefreshDevices = findViewById(R.id.btn_refresh_devices);
         btnRefreshDevices.setOnClickListener(refreshDevicesBtnClickListener);
 
+        foundDeviceListView = findViewById(R.id.found_device_list);
+        foundDevicesList = new ArrayList<>();
+        foundDevicesAdapter = new DeviceCardAdapter(this,R.id.device_ip, foundDevicesList);
+
+        foundDeviceListView.setAdapter(foundDevicesAdapter);
+        foundDeviceListView.setVisibility(View.VISIBLE);
+
+        foundDeviceListView.addOnLayoutChangeListener(new View.OnLayoutChangeListener() {
+
+            @Override
+            public void onLayoutChange(View v, int left, int top, int right, int bottom, int oldLeft, int oldTop, int oldRight, int oldBottom) {
+            }
+        });
+
         TextView tvAppVersion = findViewById(R.id.tv_app_version);
 
         String version = "";
@@ -264,6 +300,7 @@ public class EspMainActivity extends AppCompatActivity {
     public void discoverServices() {
         stopDiscovery();  // Cancel any existing discovery request
         initializeDiscoveryListener();
+        foundDevicesList.clear();
         nsdManager.discoverServices(
                 SERVICE_TYPE, NsdManager.PROTOCOL_DNS_SD, discoveryListener);
     }

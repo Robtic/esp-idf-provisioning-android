@@ -1,12 +1,9 @@
 <?xml version="1.0" encoding="utf-8"?>
-<androidx.cardview.widget.CardView xmlns:android="http://schemas.android.com/apk/res/android"
-    xmlns:app="http://schemas.android.com/apk/res-auto"
-    android:id="@+id/cv"
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
-    android:layout_height="wrap_content"
+    android:layout_height="match_parent"
     android:background="@color/colorAccent"
-    app:cardBackgroundColor="@color/colorAccent"
-    app:cardCornerRadius="4dp">
+    android:visibility="visible">
 
     <RelativeLayout
         android:layout_width="match_parent"
@@ -20,7 +17,8 @@
         android:fadingEdgeLength="40dp"
         android:focusable="true"
         android:padding="16dp"
-        android:requiresFadingEdge="horizontal">
+        android:requiresFadingEdge="horizontal"
+        android:visibility="visible">
 
         <ImageView
             android:id="@+id/blind_icon"
@@ -29,7 +27,8 @@
             android:layout_alignParentStart="true"
             android:layout_alignParentTop="true"
             android:layout_marginEnd="16dp"
-            app:srcCompat="@drawable/blinds" />
+            android:visibility="visible"
+            android:src="@drawable/blinds" />
 
         <TextView
             android:id="@+id/device_ip"
@@ -37,14 +36,16 @@
             android:layout_height="wrap_content"
             android:layout_alignParentTop="true"
             android:layout_toEndOf="@+id/blind_icon"
-            android:textSize="30sp" />
+            android:textSize="30sp"
+            android:visibility="visible" />
 
         <TextView
             android:id="@+id/device_port"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_below="@+id/device_ip"
-            android:layout_toEndOf="@+id/blind_icon" />
+            android:layout_toEndOf="@+id/blind_icon"
+            android:visibility="visible" />
 
     </RelativeLayout>
-</androidx.cardview.widget.CardView>
+</RelativeLayout>
