@@ -58,6 +58,7 @@ import com.google.android.material.floatingactionbutton.FloatingActionButton;
 import java.net.InetAddress;
 import java.util.ArrayList;
 import java.util.Map;
+import java.util.Optional;
 import java.util.concurrent.Executor;
 import java.util.concurrent.Executors;
 
@@ -102,8 +103,13 @@ public class EspMainActivity extends AppCompatActivity {
                 public void run() {
                     Map<String, byte[]> attrs;
                     attrs = nsdServiceInfo.getAttributes();
-                    foundDevicesList.add(new BlindDevice(nsdServiceInfo.getHost(),nsdServiceInfo.getPort()));
-                    foundDevicesAdapter.notifyDataSetChanged();
+
+                    if(!checkServiceKnown(nsdServiceInfo.getServiceName()))
+                    {
+                        foundDevicesList.add(new BlindDevice(nsdServiceInfo));
+                        foundDevicesAdapter.notifyDataSetChanged();
+                    }
+
                     Log.e(TAG, "Device count: "+foundDevicesList.size());
                 }
             });
@@ -112,6 +118,13 @@ public class EspMainActivity extends AppCompatActivity {
             Log.e(TAG, "IP " + nsdServiceInfo.getHost().getHostAddress()+" Port "+nsdServiceInfo.getPort());
         }
     };
+
+    private boolean checkServiceKnown(String serviceName)
+    {
+        BlindDevice dev_found= foundDevicesList.stream().filter(c->c.getServiceName().equals(serviceName)).findFirst().orElse(null);
+
+        return dev_found != null;
+    }
 
     public void initializeDiscoveryListener() {
         discoveryListener = new NsdManager.DiscoveryListener() {
@@ -301,6 +314,7 @@ public class EspMainActivity extends AppCompatActivity {
         stopDiscovery();  // Cancel any existing discovery request
         initializeDiscoveryListener();
         foundDevicesList.clear();
+        foundDevicesAdapter.notifyDataSetChanged();
         nsdManager.discoverServices(
                 SERVICE_TYPE, NsdManager.PROTOCOL_DNS_SD, discoveryListener);
     }

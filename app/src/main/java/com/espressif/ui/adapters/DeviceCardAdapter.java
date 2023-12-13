@@ -44,13 +44,10 @@ public class DeviceCardAdapter extends ArrayAdapter<BlindDevice> {
         View view = inflater.inflate(R.layout.device_row, null);
 
         TextView ip_text = view.findViewById(R.id.device_ip);
-        TextView port_text = view.findViewById(R.id.device_port);
 
         ip_text.setText(blindDevice.getAddress().getHostAddress());
-        port_text.setText(String.valueOf(blindDevice.getPort()));
 
         ip_text.setVisibility(View.VISIBLE);
-        port_text.setVisibility(View.VISIBLE);
 
         return view;
     }

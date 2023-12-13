@@ -1,5 +1,6 @@
 package com.espressif.ui.models;
 
+import android.net.nsd.NsdServiceInfo;
 import android.os.Parcel;
 import android.os.Parcelable;
 
@@ -12,36 +13,38 @@ import java.net.InetSocketAddress;
 
 public class BlindDevice implements Parcelable {
 
-    private InetAddress address;
-    private int port;
+    private NsdServiceInfo serviceInfo;
 
     public BlindDevice()
     {
 
     }
 
-    public BlindDevice(InetAddress addr, int port)
+    public BlindDevice(NsdServiceInfo serviceInfo)
     {
-        this.address = addr;
-        this.port = port;
+        this.serviceInfo = serviceInfo;
     }
 
     private BlindDevice(Parcel in) {
 
-        address = InetSocketAddress.createUnresolved(in.readString(),in.readInt()).getAddress();
-        port = in.readInt();
+        serviceInfo.setHost(InetSocketAddress.createUnresolved(in.readString(),in.readInt()).getAddress());
+        serviceInfo.setPort(in.readInt());
     }
 
     public InetAddress getAddress()
     {
-        return address;
+        return serviceInfo.getHost();
     }
 
     public int getPort()
     {
-        return port;
+        return serviceInfo.getPort();
     }
 
+    public String getServiceName()
+    {
+        return serviceInfo.getServiceName();
+    }
 
     public static final Creator<BlindDevice> CREATOR = new Creator<BlindDevice>() {
         @Override
@@ -62,7 +65,7 @@ public class BlindDevice implements Parcelable {
 
     @Override
     public void writeToParcel(@NonNull Parcel parcel, int i) {
-        parcel.writeInt(port);
-        parcel.writeString(address.toString());
+        parcel.writeInt(serviceInfo.getPort());
+        parcel.writeString(serviceInfo.getHost().getHostAddress());
     }
 }
