@@ -48,12 +48,20 @@ import androidx.recyclerview.widget.RecyclerView;
 import com.espressif.AppConstants;
 import com.espressif.provisioning.ESPConstants;
 import com.espressif.provisioning.ESPProvisionManager;
+import com.espressif.ui.adapters.DeviceAdapterInterface;
 import com.espressif.ui.adapters.DeviceCardAdapter;
 import com.espressif.ui.adapters.WiFiListAdapter;
+import com.espressif.ui.models.APIResponse;
+import com.espressif.ui.models.API_CommandRequest;
 import com.espressif.ui.models.BlindDevice;
+import com.espressif.ui.models.CommandActionEnum;
+import com.espressif.ui.models.CommandRequest;
+import com.espressif.ui.models.DeviceAPI;
+import com.espressif.ui.models.DeviceAPIClient;
 import com.espressif.wifi_provisioning.BuildConfig;
 import com.espressif.wifi_provisioning.R;
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
+import com.google.gson.Gson;
 
 import java.net.InetAddress;
 import java.util.ArrayList;
@@ -62,9 +70,17 @@ import java.util.Optional;
 import java.util.concurrent.Executor;
 import java.util.concurrent.Executors;
 
+import retrofit2.Call;
+import retrofit2.Callback;
+import retrofit2.Response;
+import retrofit2.Retrofit;
+import retrofit2.converter.gson.GsonConverterFactory;
+
 public class EspMainActivity extends AppCompatActivity {
 
     private static final String TAG = EspMainActivity.class.getSimpleName();
+
+    private DeviceAPI apiInterface;
 
     // Request codes
     private static final int REQUEST_LOCATION = 1;
@@ -261,7 +277,12 @@ public class EspMainActivity extends AppCompatActivity {
 
         foundDeviceListView = findViewById(R.id.found_device_list);
         foundDevicesList = new ArrayList<>();
-        foundDevicesAdapter = new DeviceCardAdapter(this,R.id.device_ip, foundDevicesList);
+        foundDevicesAdapter = new DeviceCardAdapter(this, R.id.device_ip, foundDevicesList, new DeviceAdapterInterface() {
+            @Override
+            public void onBtnClick(CommandRequest req) {
+                sendRequest(req);
+            }
+        });
 
         foundDeviceListView.setAdapter(foundDevicesAdapter);
         foundDeviceListView.setVisibility(View.VISIBLE);
@@ -309,6 +330,27 @@ public class EspMainActivity extends AppCompatActivity {
             discoverServices();
         }
     };
+
+    private void sendRequest(CommandRequest req)
+    {
+        apiInterface = DeviceAPIClient.getClient(req.getAddress().getHostAddress(),req.getPort()).create(DeviceAPI.class);
+        Call<APIResponse> apiResponseCall = apiInterface.setRequestCommand(req.getRequestBody());
+        Log.i(TAG,"Sending Request: "+req.getRequestBody().toString());
+        apiResponseCall.enqueue(new Callback<APIResponse>() {
+            @Override
+            public void onResponse(Call<APIResponse> call, Response<APIResponse> response) {
+                APIResponse resp = response.body();
+
+                Toast.makeText(getApplicationContext(), resp.getMessage(), Toast.LENGTH_SHORT).show();
+
+            }
+
+            @Override
+            public void onFailure(Call<APIResponse> call, Throwable t) {
+                call.cancel();
+            }
+        });
+    }
 
     public void discoverServices() {
         stopDiscovery();  // Cancel any existing discovery request
