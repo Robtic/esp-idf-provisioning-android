@@ -8,6 +8,7 @@ import android.app.Activity;
 import android.content.Context;
 import android.os.Parcel;
 import android.os.Parcelable;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.MotionEvent;
 import android.view.View;
@@ -24,6 +25,7 @@ import androidx.recyclerview.widget.RecyclerView;
 
 import com.espressif.provisioning.ESPConstants;
 import com.espressif.provisioning.WiFiAccessPoint;
+import com.espressif.ui.activities.EspMainActivity;
 import com.espressif.ui.models.API_CommandRequest;
 import com.espressif.ui.models.BlindDevice;
 import com.espressif.ui.models.CommandActionEnum;
@@ -37,6 +39,7 @@ import java.util.List;
 
 public class DeviceCardAdapter extends ArrayAdapter<BlindDevice> {
 
+    private static final String TAG = DeviceCardAdapter.class.getSimpleName();
     private Context context;
     private ArrayList<BlindDevice> deviceList;
 
@@ -64,6 +67,21 @@ public class DeviceCardAdapter extends ArrayAdapter<BlindDevice> {
         ip_text.setText(blindDevice.getAddress().getHostAddress());
         ip_text.setVisibility(View.VISIBLE);
 
+        if(blindDevice.getShowMode())
+        {
+            Log.i(TAG,position+": Showing Controls");
+            btn_raise.setVisibility(View.VISIBLE);
+            btn_lower.setVisibility(View.VISIBLE);
+            btn_stop.setVisibility(View.INVISIBLE);
+        }
+        else
+        {
+            Log.i(TAG,position+": Showing Stop");
+            btn_raise.setVisibility(View.INVISIBLE);
+            btn_lower.setVisibility(View.INVISIBLE);
+            btn_stop.setVisibility(View.VISIBLE);
+        }
+
         btn_raise.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
@@ -72,14 +90,11 @@ public class DeviceCardAdapter extends ArrayAdapter<BlindDevice> {
                     API_CommandRequest req_body = new API_CommandRequest();
                     req_body.setAction(MOVE_UP);
                     CommandRequest req = new CommandRequest();
+                    req.setItemPosition(position);
                     req.setAddress(blindDevice.getAddress());
                     req.setPort(blindDevice.getPort());
                     req.setRequestBody(req_body);
                     mClickListener.onBtnClick(req);
-
-                    btn_raise.setVisibility(View.INVISIBLE);
-                    btn_lower.setVisibility(View.INVISIBLE);
-                    btn_stop.setVisibility(View.VISIBLE);
                 }
             }
         });
@@ -92,14 +107,11 @@ public class DeviceCardAdapter extends ArrayAdapter<BlindDevice> {
                     API_CommandRequest req_body = new API_CommandRequest();
                     req_body.setAction(MOVE_DOWN);
                     CommandRequest req = new CommandRequest();
+                    req.setItemPosition(position);
                     req.setAddress(blindDevice.getAddress());
                     req.setPort(blindDevice.getPort());
                     req.setRequestBody(req_body);
                     mClickListener.onBtnClick(req);
-
-                    btn_raise.setVisibility(View.INVISIBLE);
-                    btn_lower.setVisibility(View.INVISIBLE);
-                    btn_stop.setVisibility(View.VISIBLE);
                 }
             }
         });
@@ -112,19 +124,28 @@ public class DeviceCardAdapter extends ArrayAdapter<BlindDevice> {
                     API_CommandRequest req_body = new API_CommandRequest();
                     req_body.setAction(MOVE_STOP);
                     CommandRequest req = new CommandRequest();
+                    req.setItemPosition(position);
                     req.setAddress(blindDevice.getAddress());
                     req.setPort(blindDevice.getPort());
                     req.setRequestBody(req_body);
                     mClickListener.onBtnClick(req);
-
-                    btn_raise.setVisibility(View.VISIBLE);
-                    btn_lower.setVisibility(View.VISIBLE);
-                    btn_stop.setVisibility(View.INVISIBLE);
                 }
             }
         });
 
         return view;
+    }
+
+    public void showStop(int position)
+    {
+        deviceList.get(position).showStop();
+        notifyDataSetChanged();
+    }
+
+    public void showControls(int position)
+    {
+        deviceList.get(position).showControls();
+        notifyDataSetChanged();
     }
 
     public int getItemCount() {

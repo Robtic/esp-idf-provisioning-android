@@ -11,6 +11,8 @@ public class CommandRequest {
     private API_CommandRequest request;
     private InetAddress targetIP;
 
+    private int item_pos;
+
     private int targetPort;
     public CommandRequest()
     {
@@ -44,6 +46,16 @@ public class CommandRequest {
     public int getPort()
     {
         return this.targetPort;
+    }
+
+    public int getItemPosition()
+    {
+        return item_pos;
+    }
+
+    public void setItemPosition(int position)
+    {
+        this.item_pos = position;
     }
     @NonNull
     @Override

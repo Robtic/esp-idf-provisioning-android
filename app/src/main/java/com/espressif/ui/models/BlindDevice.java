@@ -15,20 +15,29 @@ public class BlindDevice implements Parcelable {
 
     private NsdServiceInfo serviceInfo;
 
+    /**
+     * true - show controls buttons
+     * false - show stop button
+     */
+    private boolean show_controls = true;
+
     public BlindDevice()
     {
-
+        this.show_controls = true;
     }
 
     public BlindDevice(NsdServiceInfo serviceInfo)
     {
+        super();
         this.serviceInfo = serviceInfo;
     }
 
-    private BlindDevice(Parcel in) {
-
+    private BlindDevice(Parcel in)
+    {
+        super();
         serviceInfo.setHost(InetSocketAddress.createUnresolved(in.readString(),in.readInt()).getAddress());
         serviceInfo.setPort(in.readInt());
+        show_controls = in.readBoolean();
     }
 
     public InetAddress getAddress()
@@ -58,6 +67,21 @@ public class BlindDevice implements Parcelable {
         }
     };
 
+    public void showControls()
+    {
+        this.show_controls = true;
+    }
+
+    public void showStop()
+    {
+        this.show_controls = false;
+    }
+
+    public boolean getShowMode()
+    {
+        return show_controls;
+    }
+
     @Override
     public int describeContents() {
         return 0;
@@ -67,5 +91,6 @@ public class BlindDevice implements Parcelable {
     public void writeToParcel(@NonNull Parcel parcel, int i) {
         parcel.writeInt(serviceInfo.getPort());
         parcel.writeString(serviceInfo.getHost().getHostAddress());
+        parcel.writeBoolean(show_controls);
     }
 }
