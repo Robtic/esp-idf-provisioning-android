@@ -1,5 +1,9 @@
 package com.espressif.ui.models;
 
+import androidx.annotation.NonNull;
+
+import com.google.gson.Gson;
+
 import java.net.InetAddress;
 
 public class CommandRequest {
@@ -40,5 +44,12 @@ public class CommandRequest {
     public int getPort()
     {
         return this.targetPort;
+    }
+    @NonNull
+    @Override
+    public String toString()
+    {
+        Gson gson = new Gson();
+        return gson.toJson(this);
     }
 }

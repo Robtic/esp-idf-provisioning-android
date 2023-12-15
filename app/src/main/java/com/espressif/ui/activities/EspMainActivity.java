@@ -335,7 +335,7 @@ public class EspMainActivity extends AppCompatActivity {
     {
         apiInterface = DeviceAPIClient.getClient(req.getAddress().getHostAddress(),req.getPort()).create(DeviceAPI.class);
         Call<APIResponse> apiResponseCall = apiInterface.setRequestCommand(req.getRequestBody());
-        Log.i(TAG,"Sending Request: "+req.getRequestBody().toString());
+        Log.i(TAG,"Sending Request: "+req.toString());
         apiResponseCall.enqueue(new Callback<APIResponse>() {
             @Override
             public void onResponse(Call<APIResponse> call, Response<APIResponse> response) {
